@@ -11,6 +11,10 @@ import scipy.cluster
 import scipy.cluster.hierarchy
 import pickle
 
+from sklearn import metrics
+from sklearn.preprocessing import StandardScaler
+from sklearn.cluster import DBSCAN
+
 from collections import Counter
 from collections import defaultdict
 
@@ -97,37 +101,50 @@ def feature_engineering():
 
     X = np.array(val).reshape(len(recipes), len(features))
 
-    X_sparse = scipy.sparse.csc_matrix(X)
 
-    np.savez('recipes_X', data=X_sparse.data, indices=X_sparse.indices, indptr=X_sparse.indptr, shape=X_sparse.shape)
-    with open('features.dat', 'wb') as fdat:
+    np.savez('cache/recipes_X', X=X)
+    with open('cache/features.dat', 'wb') as fdat:
         pickle.dump(features, fdat)
 
 def clustering(X):
     recipes, ingredient_list = load_recipes()
-    with open('features.dat', 'rb') as fdat:
+    with open('cache/features.dat', 'rb') as fdat:
         features = pickle.load(fdat)
 
-    # print(X.shape)
-    # index_to_check=1
-    # r = recipes[index_to_check]
-    # print(r)
-    # for i,f in enumerate(features):
-    #     ing = r[ING_KEY]
-    #     should_contain = X[index_to_check,i] == 1
-    #     if should_contain != (f in ing):
-    #         print("error")
-    #     elif should_contain:
-    #         print(f)
+    print(X.shape)
+    # X = StandardScaler().fit_transform(X)
 
-    Z = scipy.cluster.hierarchy.linkage(X, method='single', metric='cosine')
+    clusterer = DBSCAN(eps=0.4, metric='cosine', algorithm='brute')
+
+    result = clusterer.fit(X)
+
+    print('fitting finished')
+    core_samples_mask = np.zeros_like(result.labels_, dtype=bool)
+    core_samples_mask[result.core_sample_indices_] = True
+    labels = result.labels_
     
+    # Number of clusters in labels, ignoring noise if present.
+    n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
+    
+    print('Estimated number of clusters: %d' % n_clusters_)
+    print('Silhouette Coefficient: %0.3f'
+          % metrics.silhouette_score(X, labels))
+    print('Entropy of labels: {}'.format(metrics.cluster.entropy(labels)))
+
+    clusters = set(labels)
+
+    num_samples_per_cluster = np.bincount(labels + 1)
+
+    plt.figure()
+    plt.bar(sorted(list(clusters)), num_samples_per_cluster)
+    plt.show()
+
 
 if __name__ == '__main__':
     if len(sys.argv) == 2:
         filename = sys.argv[1]
-        loader = np.load(filename)
-        X = scipy.sparse.csc_matrix((loader['data'], loader['indices'], loader['indptr'],), loader['shape'])
+        with np.load(filename) as data:
+            X = data['X'][:1000,:]
         clustering(X)
     else:
         feature_engineering()
