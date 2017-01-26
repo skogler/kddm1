@@ -13,6 +13,7 @@ from sklearn.cluster import AgglomerativeClustering
 
 from collections import Counter
 from collections import defaultdict
+import sys
 
 URL_KEY = 'url'
 ING_KEY = 'ingredients'
@@ -25,10 +26,10 @@ def printRecipeSamples(num_samples, labels, n_clusters):
         print("Printing recipes for cluster: " + str(cluster))
         ids = np.where(labels == cluster)
         counter = 0
-        for id in ids[counter]:
+        for id in ids[np.random.randint(0, len(ids))]:
             if counter == num_samples:
                 break
-            print(recipes[id]["title"])
+            print(" ", recipes[id]["title"])
             counter += 1
 
 def printClusterDiffs(cluster_centers, feature_labels):
@@ -42,15 +43,16 @@ def printClusterDiffs(cluster_centers, feature_labels):
             print("Max Diff of cluster {} to cluster {} is: {} which is {}".format(i, j, maxDiff, feature_labels[index]))
 
 def printClusterUniqueness(cluster_centers, feature_labels):
-    for i, cluster1 in enumerate(cluster_centers):
-        clusterMean = np.zeros(cluster1.shape)
-        for j, cluster2 in enumerate(cluster_centers):
-            clusterMean =clusterMean + cluster2
+    pass
+    # for i, cluster1 in enumerate(cluster_centers):
+    #     clusterMean = np.zeros(cluster1.shape)
+    #     for j, cluster2 in enumerate(cluster_centers):
+    #         clusterMean =clusterMean + cluster2
 
-        diff = np.absolute(clusterMean/9 - cluster1)
-        maxDiff = np.max(diff)
-        index = np.argmax(diff)
-        print("Max Uniqueness of cluster {} is: {} which is {}".format(i, maxDiff, feature_labels[index]))
+    #     diff = np.absolute(clusterMean/9 - cluster1)
+    #     maxDiff = np.max(diff)
+    #     index = np.argmax(diff)
+    #     print("Max Uniqueness of cluster {} is: {} which is {}".format(i, maxDiff, feature_labels[index]))
 
 def visualization(labels, feature_labels):
     clusters = set(labels)
@@ -81,7 +83,8 @@ def visualization(labels, feature_labels):
     for i in range(n_clusters_):
         print('Cluster {} (size {}):'.format(i, num_samples_per_cluster[i]))
         for f in range(X.shape[1]):
-            print('  {:{width}} : {:0.4f}'.format(feature_labels[f], cluster_centers[i, f], width=max_labellen))
+            if cluster_centers[i, f] > sys.float_info.epsilon:
+                print('  {:{width}} : {:0.4f}'.format(feature_labels[f], cluster_centers[i, f], width=max_labellen))
 
     printRecipeSamples(5, labels, 10) # immer zu n_clusters anpassen
     printClusterDiffs(cluster_centers, feature_labels)
@@ -102,7 +105,7 @@ def clustering(X, feature_labels):
 
     print('input dimensions:', X.shape)
     # X = StandardScaler().fit_transform(X)
-    clusterer = DBSCAN(eps=1.0/4.0 , metric='jaccard')
+    clusterer = DBSCAN(eps=0.499 , metric='jaccard')
 
     result = clusterer.fit(X)
 

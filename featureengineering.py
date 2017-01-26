@@ -136,7 +136,7 @@ def feature_engineering():
     recipes, ingredient_list = load_recipes()
 
     rand_smpl = [recipes[i] for i in sorted(random.sample(range(len(recipes)), 10000))]
-    print(rand_smpl)
+    # print(rand_smpl)
 
     X, feature_labels = feature_selection(rand_smpl, ingredient_list)
 
