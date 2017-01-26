@@ -11,6 +11,7 @@ import scipy.sparse
 import scipy.cluster
 import scipy.cluster.hierarchy
 import pickle
+import random
 
 from collections import Counter
 from collections import defaultdict
@@ -58,6 +59,8 @@ def conditional_entropy(y, X, cooccurrence, num_recipes):
     for x in X:
         cond = conditional_probability(y, x, cooccurrence)
         joint = joint_probability(x, y, cooccurrence, num_recipes)
+        if cond == 0:
+            continue
         ent -=  joint * math.log2(cond)
     assert ent >= 0
     return ent
@@ -82,7 +85,7 @@ def feature_selection(recipes, ingredient_list):
 
     # APPLY THRESHOLD
     num_recipes = len(recipes)
-    low_threshold = 0.05
+    low_threshold = 0.15
     used = apply_threshold_to_counter(counter,  int(low_threshold * num_recipes))
 
     # BUILD CO-OCCURENCE MATRIX
@@ -132,11 +135,16 @@ def feature_selection(recipes, ingredient_list):
 def feature_engineering():
     recipes, ingredient_list = load_recipes()
 
-    X, feature_labels = feature_selection(recipes, ingredient_list)
+    rand_smpl = [recipes[i] for i in sorted(random.sample(range(len(recipes)), 10000))]
+    print(rand_smpl)
+
+    X, feature_labels = feature_selection(rand_smpl, ingredient_list)
 
     np.savez('cache/recipes_X', X=X)
     with open('cache/features.dat', 'wb') as fdat:
         pickle.dump(feature_labels, fdat)
+    with open('cache/recipe_names.dat', 'wb') as fdat:
+        pickle.dump(rand_smpl, fdat)
 
 if __name__ == '__main__':
     feature_engineering()
