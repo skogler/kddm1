@@ -31,6 +31,27 @@ def printRecipeSamples(num_samples, labels, n_clusters):
             print(recipes[id]["title"])
             counter += 1
 
+def printClusterDiffs(cluster_centers, feature_labels):
+    for i, cluster1 in enumerate(cluster_centers):
+        for j, cluster2 in enumerate(cluster_centers):
+            if i >= j:
+                continue
+            diff = np.absolute(cluster2 - cluster1)
+            maxDiff = np.max(diff)
+            index = np.argmax(diff)
+            print("Max Diff of cluster {} to cluster {} is: {} which is {}".format(i, j, maxDiff, feature_labels[index]))
+
+def printClusterUniqueness(cluster_centers, feature_labels):
+    for i, cluster1 in enumerate(cluster_centers):
+        clusterMean = np.zeros(cluster1.shape)
+        for j, cluster2 in enumerate(cluster_centers):
+            clusterMean =clusterMean + cluster2
+
+        diff = np.absolute(clusterMean/9 - cluster1)
+        maxDiff = np.max(diff)
+        index = np.argmax(diff)
+        print("Max Uniqueness of cluster {} is: {} which is {}".format(i, maxDiff, feature_labels[index]))
+
 def visualization(labels, feature_labels):
     clusters = set(labels)
     n_clusters_ = len(clusters)
@@ -63,6 +84,8 @@ def visualization(labels, feature_labels):
             print('  {:{width}} : {:0.4f}'.format(feature_labels[f], cluster_centers[i, f], width=max_labellen))
 
     printRecipeSamples(5, labels, 10) # immer zu n_clusters anpassen
+    printClusterDiffs(cluster_centers, feature_labels)
+    printClusterUniqueness(cluster_centers, feature_labels)
 
 def clustering2(X, feature_labels):
     n_clusters = 10
